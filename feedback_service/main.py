@@ -1,7 +1,48 @@
+import json
+import threading
+import time
+from pathlib import Path
+from dotenv import dotenv_values
 from fastapi import FastAPI, HTTPException
+from azure.servicebus import ServiceBusClient
 from database import get_connection
 
+_env = dotenv_values(Path(__file__).parent.parent / "env")
+SB_LISTEN_CONN_STR = _env["SB_LISTEN_CONN_STR"]
+SB_QUEUE_NAME = _env["SB_QUEUE_NAME"]
+
+POLL_INTERVAL_SECONDS = 10
+
 app = FastAPI(title="Feedback Service", version="1.0.0")
+
+
+def _poll_queue():
+    """Background thread: reads messages from Service Bus every POLL_INTERVAL_SECONDS."""
+    print(f"[FeedbackService] Queue listener started (interval={POLL_INTERVAL_SECONDS}s)")
+    while True:
+        try:
+            with ServiceBusClient.from_connection_string(SB_LISTEN_CONN_STR) as client:
+                with client.get_queue_receiver(queue_name=SB_QUEUE_NAME, max_wait_time=5) as receiver:
+                    messages = receiver.receive_messages(max_message_count=20, max_wait_time=5)
+                    for msg in messages:
+                        body = str(msg)
+                        print(f"[FeedbackService] Received message: {body}")
+                        try:
+                            data = json.loads(body)
+                            event = data.get("event", "unknown")
+                            print(f"[FeedbackService] Event={event}, data={data}")
+                        except json.JSONDecodeError:
+                            print(f"[FeedbackService] Non-JSON message: {body}")
+                        receiver.complete_message(msg)
+        except Exception as exc:
+            print(f"[FeedbackService] Queue error: {exc}")
+        time.sleep(POLL_INTERVAL_SECONDS)
+
+
+@app.on_event("startup")
+def startup_event():
+    t = threading.Thread(target=_poll_queue, daemon=True)
+    t.start()
 
 
 @app.get("/")

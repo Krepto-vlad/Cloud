@@ -1,0 +1,37 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.13"
+    displayName: "Set up Python 3.13"
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+      pip install flake8 httpx pytest
+    workingDirectory: $(Build.SourcesDirectory)
+    displayName: "Install dependencies"
+
+  - script: |
+      flake8 . --max-line-length=120 --exclude=tests,__pycache__ --statistics
+    workingDirectory: $(Build.SourcesDirectory)
+    displayName: "Static code validation (flake8)"
+
+  - script: |
+      python -m pytest tests/ -v --tb=short
+    workingDirectory: $(Build.SourcesDirectory)
+    displayName: "Run unit tests"
+    env:
+      DB_USERNAME: "test"
+      DB_PASSWORD: "test"
+      DB_SERVER: "test"
+      DB_DATABASE: "test"
+      SB_SEND_CONN_STR: "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=send;SharedAccessKey=ZmFrZWtleQ==;EntityPath=fakequeue"
+      SB_QUEUE_NAME: "fakequeue"

@@ -73,15 +73,17 @@ def init():
         conn.commit()
 
         cursor.execute("""
-            INSERT INTO UladzislauBarsukou_tournament.matches (tournamentID, participant1, participant2, match_date, result) VALUES
-            (1, 'Alice Johnson', 'Bob Smith',   '2026-04-21 10:00', 'Alice Johnson'),
+            INSERT INTO UladzislauBarsukou_tournament.matches
+            (tournamentID, participant1, participant2, match_date, result) VALUES
+            (1, 'Alice Johnson', 'Bob Smith', '2026-04-21 10:00', 'Alice Johnson'),
             (1, 'Carol White',  'David Brown',  '2026-04-21 12:00', NULL),
             (2, 'Team Alpha',   'Team Beta',    '2026-06-16 15:00', NULL),
             (3, 'FC North',     'FC South',     '2026-09-11 18:00', NULL)
         """)
 
         cursor.execute("""
-            INSERT INTO UladzislauBarsukou_tournament.schedules (tournamentID, round, scheduled_date, description) VALUES
+            INSERT INTO UladzislauBarsukou_tournament.schedules
+            (tournamentID, round, scheduled_date, description) VALUES
             (1, 1, '2026-04-21 09:00', 'Quarter-finals'),
             (1, 2, '2026-04-23 09:00', 'Semi-finals'),
             (1, 3, '2026-04-25 14:00', 'Final'),

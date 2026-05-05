@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  registration:
+    build: ./registration_service
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./env
+
+  tournament:
+    build: ./tournament_service
+    ports:
+      - "8002:8002"
+    env_file:
+      - ./env
+
+  feedback:
+    build: ./feedback_service
+    ports:
+      - "8003:8003"
+    env_file:
+      - ./env
+    depends_on:
+      - registration
